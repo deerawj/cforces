@@ -1,0 +1,12 @@
+a .friend-names {
+  text-decoration: none !important;
+  color: black !important;
+  text-decoration-line: none !important;
+  display: inline;
+}
+
+/* New style for anchors annotated by the extension */
+a.fc-annotated {
+    text-decoration: none !important;
+}
+

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Friends Question Checker",
+  "version": "1.0",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.codeforces.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["problemBox.html", "dataUtils.js", "blastLogic.js", "luckyLogic.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Friends Checker</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Friend List</h1>
+      <div class="input-group">
+        <input type="text" id="usernameInput" placeholder="Add a friend">
+        <button id="addFriendBtn">Add</button>
+      </div>
+      <!-- Toggle container placed above the username section -->
+      <div class="toggle-container">
+        <input type="checkbox" id="toggleFriendNames" checked>
+        <label for="toggleFriendNames">Show friend names</label>
+      </div>
+      <!-- New section for your username (read-only by default) -->
+      <div class="input-group myusername-container">
+        <input type="text" id="myUsername" placeholder="Your Codeforces username" readonly>
+      </div>
+      <!-- New big display for your solved count -->
+      <div id="mySolvedCount"></div>
+      <!-- New blast container -->
+      <div class="blast-container">
+        <input type="number" id="blastThreshold" placeholder="Blast threshold" value="3" min="1">
+        <button id="blastBtn">Blast</button>
+      </div>
+      <!-- New "I'm Feeling Lucky" container -->
+      <div class="lucky-container">
+        <button id="luckyBtn">I'm Feeling Lucky</button>
+      </div>
+      <ul id="friendsList">
+        <!-- List of usernames will appear here -->
+      </ul>
+    </div>
+    <script src="dataUtils.js"></script>
+    <script src="blastLogic.js"></script>
+    <script src="luckyLogic.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,175 @@
+html, body {
+  overflow: hidden;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  width: 300px;
+  margin: 0;
+  padding: 10px;
+}
+
+.container {
+  text-align: center;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+#usernameInput {
+  width: 70%;
+  padding: 5px;
+}
+
+#addFriendBtn {
+  padding: 5px 10px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  padding: 10px;
+  font-size: 16px;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* New friend info structure */
+.friend-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.username-text {
+  font-weight: bold;
+}
+
+a.username-text {
+  text-decoration: none;
+  color: inherit;
+}
+
+.counts {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.solved-count {
+  color: green;
+}
+
+.tried-count {
+  color: goldenrod;
+}
+
+/* Actions container for icon buttons aligned right */
+.actions {
+  display: flex;
+  gap: 5px;
+}
+
+/* Style buttons to remove default borders */
+.refresh-btn, .remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  /* Maintain consistent icon size */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blast-container {
+  background-color: #ffcccc;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+.blast-container input {
+  width: 50px;
+  padding: 5px;
+  font-size: 16px;
+  margin-right: 10px;
+  text-align: center;
+}
+
+.blast-container button {
+  padding: 5px 15px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #ff6666;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.myusername-container {
+  background-color: #ccffcc;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+.myusername-container input {
+  width: 80%;
+  padding: 5px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.toggle-container {
+  margin: 10px 0;
+}
+
+/* New style for the big solved count display */
+#mySolvedCount {
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.friend-not-solved {
+  color: black; /* same as solved/tried numbers */
+  font-weight: bold;
+  margin-left: 5px;
+  min-width: 30px;
+  display: inline-block;
+  text-align: center;
+}
+
+.tried-count, .solved-count, .friend-not-solved {
+  margin-left: 5px;
+  min-width: 30px;
+  display: inline-block;
+  text-align: center;
+}
+
+.lucky-container {
+  background-color: #ccccff;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+.lucky-container button {
+  padding: 10px 20px;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #6666ff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
