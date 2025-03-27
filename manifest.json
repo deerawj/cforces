@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Friends Question Checker",
+  "name": "Codeforces Toolkit",
   "version": "1.0",
   "action": {
     "default_popup": "popup.html"

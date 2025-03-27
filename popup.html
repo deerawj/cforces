@@ -2,9 +2,14 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Friends Checker</title>
+    <title>Codeforces Toolkit</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="popup.css">
+    <!-- Replace the local jQuery copy with the CDN version: -->
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+      integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+      crossorigin="anonymous"></script>
   </head>
   <body>
     <div class="container">
@@ -37,6 +42,7 @@
         <!-- List of usernames will appear here -->
       </ul>
     </div>
+    <!-- Load jQuery first -->
     <script src="dataUtils.js"></script>
     <script src="blastLogic.js"></script>
     <script src="luckyLogic.js"></script>

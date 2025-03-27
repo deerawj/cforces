@@ -7,97 +7,80 @@ function saveFriends() {
   localStorage.setItem("friendsList", JSON.stringify(friendUsernames));
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-  const usernameInput = document.getElementById("usernameInput");
-  const addFriendBtn = document.getElementById("addFriendBtn");
-  const friendsList = document.getElementById("friendsList");
-  const toggleFriendNames = document.getElementById("toggleFriendNames");
-  const blastThresholdInput = document.getElementById("blastThreshold");
-  const blastBtn = document.getElementById("blastBtn");
-  const luckyBtn = document.getElementById("luckyBtn");
+$(function() {
+  // Cache frequently used elements.
+  const $usernameInput = $("#usernameInput"),
+        $addFriendBtn = $("#addFriendBtn"),
+        $friendsList = $("#friendsList"),
+        $toggleFriendNames = $("#toggleFriendNames"),
+        $blastThresholdInput = $("#blastThreshold"),
+        $blastBtn = $("#blastBtn"),
+        $luckyBtn = $("#luckyBtn"),
+        $myUsernameInput = $("#myUsername"),
+        $mySolvedCountDiv = $("#mySolvedCount");
   
-  // "Your Username" element and solved count display.
-  const myUsernameInput = document.getElementById("myUsername");
-  const mySolvedCountDiv = document.getElementById("mySolvedCount");
-  
-  // Load your username.
+  // Load my username and solved status.
   if (chrome && chrome.storage) {
     chrome.storage.local.get("myUsername", function(result) {
       if (result.myUsername) {
-        myUsernameInput.value = result.myUsername;
+        $myUsernameInput.val(result.myUsername);
         fetchMyStatus(result.myUsername);
       }
     });
   } else {
-    const storedMyUsername = localStorage.getItem("myUsername");
-    if (storedMyUsername) {
-      myUsernameInput.value = storedMyUsername;
-      fetchMyStatus(storedMyUsername);
+    const stored = localStorage.getItem("myUsername");
+    if (stored) {
+      $myUsernameInput.val(stored);
+      fetchMyStatus(stored);
     }
   }
   
-  // Make the username box editable on click and save on blur or Enter.
-  myUsernameInput.addEventListener("click", function() {
-    this.removeAttribute("readonly");
-  });
-  myUsernameInput.addEventListener("blur", function() {
-    this.setAttribute("readonly", "true");
-    const myUsername = myUsernameInput.value.trim();
-    if (myUsername) {
+  // Make myUsername editable.
+  $myUsernameInput.on("click", function() {
+    $(this).removeAttr("readonly");
+  }).on("blur", function(){
+    $(this).attr("readonly", "true");
+    const uname = $.trim($myUsernameInput.val());
+    if (uname) {
       if (chrome && chrome.storage) {
-        chrome.storage.local.set({ myUsername: myUsername });
+        chrome.storage.local.set({ myUsername: uname });
       } else {
-        localStorage.setItem("myUsername", myUsername);
+        localStorage.setItem("myUsername", uname);
       }
-      fetchMyStatus(myUsername); // Only call if username isn't empty
+      fetchMyStatus(uname);
     } else {
       console.error("No username provided; skipping fetchMyStatus.");
     }
-  });
-  myUsernameInput.addEventListener("keyup", function(e) {
-    if (e.key === "Enter") {
-      myUsernameInput.blur();
-      alert("Your username has been saved!");
-    }
+  }).on("keyup", function(e) {
+    if (e.key === "Enter") { $(this).blur(); alert("Your username has been saved!"); }
   });
   
-  // Function to fetch your solved problems.
+  // Use jQuery's ajax and chaining to simplify fetching.
   function fetchMyStatus(username) {
-    fetch(`https://codeforces.com/api/user.status?handle=${username}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === "OK") {
-          let solvedSet = new Set();
-          data.result.forEach(submission => {
-            if (submission.verdict === "OK") {
-              let key = submission.problem.contestId + submission.problem.index;
-              solvedSet.add(key);
-            }
-          });
-          mySolvedSet = solvedSet;
-          const count = mySolvedSet.size;
-          mySolvedCountDiv.textContent = count;
-          localStorage.setItem("mySolvedCached", count);
-          localStorage.setItem("myStatusLastUpdated", Date.now());
-          const solvedKeysStr = JSON.stringify(Array.from(mySolvedSet));
-          localStorage.setItem("mySolvedKeys", solvedKeysStr);
-          // ALSO update chrome.storage so that content.js can get the proper value.
-          if (chrome && chrome.storage) {
-            chrome.storage.local.set({ mySolvedKeys: solvedKeysStr });
-          }
-          updateFriendPercentages();
-        } else {
-          console.error("Error fetching status for your username:", username);
-        }
-      })
-      .catch(err => console.error("Fetch error for my status:", err));
+    $.getJSON(`https://codeforces.com/api/user.status?handle=${username}`)
+     .done(data => {
+       if (data.status === "OK") {
+         mySolvedSet = new Set(data.result.filter(s => s.verdict==="OK")
+                                       .map(s => s.problem.contestId + s.problem.index));
+         const count = mySolvedSet.size;
+         $mySolvedCountDiv.text(count);
+         localStorage.setItem("mySolvedCached", count);
+         localStorage.setItem("myStatusLastUpdated", Date.now());
+         const solvedKeysStr = JSON.stringify(Array.from(mySolvedSet));
+         localStorage.setItem("mySolvedKeys", solvedKeysStr);
+         if (chrome && chrome.storage) chrome.storage.local.set({ mySolvedKeys: solvedKeysStr });
+         updateFriendPercentages();
+       } else { console.error("Error fetching status for:", username); }
+     })
+     .fail(err => console.error("Fetch error for my status:", err));
   }
-
+  
   // New: Update percentages for each friend DOM element.
   function updateFriendPercentages() {
-    const lis = Array.from(friendsList.children);
-    lis.forEach(li => {
-      const friendName = li.querySelector('.username-text').textContent.trim();
+    const $lis = $friendsList.children();
+    $lis.each(function() {
+      const $li = $(this);
+      const friendName = $li.find('.username-text').text().trim();
       if (userStatus[friendName] && userStatus[friendName].solved.length > 0) {
         const solvedArr = userStatus[friendName].solved;
         // Compute number of friend's solved problems that I also solved.
@@ -107,13 +90,12 @@ document.addEventListener("DOMContentLoaded", function() {
           percentage = "0" + percentage;
         }
         userStatus[friendName].percentage = percentage;
-        let notSolvedSpan = li.querySelector('.friend-not-solved');
-        if (!notSolvedSpan) {
-          notSolvedSpan = document.createElement("span");
-          notSolvedSpan.className = "friend-not-solved";
-          li.querySelector('.counts').appendChild(notSolvedSpan);
+        let $notSolvedSpan = $li.find('.friend-not-solved');
+        if (!$notSolvedSpan.length) {
+          $notSolvedSpan = $("<span>").addClass("friend-not-solved");
+          $li.find('.counts').append($notSolvedSpan);
         }
-        notSolvedSpan.textContent = percentage + "%";
+        $notSolvedSpan.text(percentage + "%");
       }
     });
     if (chrome && chrome.storage) {
@@ -126,22 +108,22 @@ document.addEventListener("DOMContentLoaded", function() {
     const cachedCount = localStorage.getItem("mySolvedCached");
     const lastUpdated = localStorage.getItem("myStatusLastUpdated");
     if (cachedCount !== null) {
-      mySolvedCountDiv.textContent = cachedCount;
+      $mySolvedCountDiv.text(cachedCount);
     }
     if (!lastUpdated || (Date.now() - parseInt(lastUpdated)) > 60000) {
-      fetchMyStatus(myUsernameInput.value.trim());
+      fetchMyStatus($myUsernameInput.val().trim());
     }
   }
   
   // Load toggle setting.
   if (chrome && chrome.storage) {
     chrome.storage.local.get("showFullNames", function(result) {
-      toggleFriendNames.checked = result.showFullNames !== undefined ? result.showFullNames : true;
+      $toggleFriendNames.prop("checked", result.showFullNames !== undefined ? result.showFullNames : true);
     });
   }
-  toggleFriendNames.addEventListener("change", function() {
+  $toggleFriendNames.on("change", function() {
     if (chrome && chrome.storage) {
-      chrome.storage.local.set({ showFullNames: toggleFriendNames.checked });
+      chrome.storage.local.set({ showFullNames: $toggleFriendNames.prop("checked") });
     }
   });
   
@@ -165,10 +147,10 @@ document.addEventListener("DOMContentLoaded", function() {
   
   // Sort friend list.
   function sortFriendList() {
-    const lis = Array.from(friendsList.children);
-    lis.sort((a, b) => {
-      const userA = a.querySelector('.username-text').textContent.trim();
-      const userB = b.querySelector('.username-text').textContent.trim();
+    const $lis = $friendsList.children();
+    $lis.sort((a, b) => {
+      const userA = $(a).find('.username-text').text().trim();
+      const userB = $(b).find('.username-text').text().trim();
       const solvedA = userStatus[userA] ? userStatus[userA].solved.length : 0;
       const solvedB = userStatus[userB] ? userStatus[userB].solved.length : 0;
       const triedA = userStatus[userA] ? userStatus[userA].tried.length : 0;
@@ -176,29 +158,30 @@ document.addEventListener("DOMContentLoaded", function() {
       if (solvedA !== solvedB) return solvedB - solvedA;
       return triedB - triedA;
     });
-    lis.forEach(li => friendsList.appendChild(li));
+    $lis.each(function() {
+      $friendsList.append($(this));
+    });
   }
   
   // Remove fetchUserStatus function and replace with updateFriendStatus using getUserStatus.
-  function updateFriendStatus(username, li) {
+  function updateFriendStatus(username, $li) {
     getUserStatus(username).then(status => {
       userStatus[username] = status; // cache locally.
       // Update UI elements.
-      const solvedSpan = li.querySelector('.solved-count');
-      const triedSpan = li.querySelector('.tried-count');
-      if (solvedSpan) solvedSpan.textContent = status.solved.length;
-      if (triedSpan) triedSpan.textContent = status.tried.length;
+      const $solvedSpan = $li.find('.solved-count');
+      const $triedSpan = $li.find('.tried-count');
+      if ($solvedSpan.length) $solvedSpan.text(status.solved.length);
+      if ($triedSpan.length) $triedSpan.text(status.tried.length);
       let common = status.solved.length > 0 && mySolvedSet.size > 0 ?
                    status.solved.filter(prob => mySolvedSet.has(prob)).length : 0;
       let percentage = status.solved.length > 0 ? (common / status.solved.length * 100).toFixed(3) : "0.000";
       userStatus[username].percentage = percentage;
-      let notSolvedSpan = li.querySelector('.friend-not-solved');
-      if (!notSolvedSpan) {
-        notSolvedSpan = document.createElement("span");
-        notSolvedSpan.className = "friend-not-solved";
-        li.querySelector('.counts').appendChild(notSolvedSpan);
+      let $notSolvedSpan = $li.find('.friend-not-solved');
+      if (!$notSolvedSpan.length) {
+        $notSolvedSpan = $("<span>").addClass("friend-not-solved");
+        $li.find('.counts').append($notSolvedSpan);
       }
-      notSolvedSpan.textContent = percentage + "%";
+      $notSolvedSpan.text(percentage + "%");
       if(chrome && chrome.storage) {
         chrome.storage.local.set({ userStatus, friendUsernames });
       }
@@ -209,42 +192,29 @@ document.addEventListener("DOMContentLoaded", function() {
   // Add a friend to UI.
   function addFriend(username, fromCache) {
     if (!fromCache && friendUsernames.includes(username)) return;
-    const li = document.createElement("li");
-    const friendInfo = document.createElement("div");
-    friendInfo.className = "friend-info";
-    const usernameLink = document.createElement("a");
-    usernameLink.href = `https://codeforces.com/profile/${username}`;
-    usernameLink.target = "_blank";
-    usernameLink.className = "username-text";
-    usernameLink.textContent = username;
-    friendInfo.appendChild(usernameLink);
-    const countsDiv = document.createElement("div");
-    countsDiv.className = "counts";
-    const solvedSpan = document.createElement("span");
-    solvedSpan.className = "solved-count";
-    solvedSpan.textContent = "0";
-    countsDiv.appendChild(solvedSpan);
-    const triedSpan = document.createElement("span");
-    triedSpan.className = "tried-count";
-    triedSpan.textContent = "0";
-    countsDiv.appendChild(triedSpan);
-    friendInfo.appendChild(countsDiv);
-    li.appendChild(friendInfo);
+    const $li = $("<li>");
+    const $friendInfo = $("<div>").addClass("friend-info");
+    const $usernameLink = $("<a>").attr("href", `https://codeforces.com/profile/${username}`)
+                                  .attr("target", "_blank")
+                                  .addClass("username-text")
+                                  .text(username);
+    $friendInfo.append($usernameLink);
+    const $countsDiv = $("<div>").addClass("counts");
+    const $solvedSpan = $("<span>").addClass("solved-count").text("0");
+    const $triedSpan = $("<span>").addClass("tried-count").text("0");
+    $countsDiv.append($solvedSpan).append($triedSpan);
+    $friendInfo.append($countsDiv);
+    $li.append($friendInfo);
     
-    const actionsDiv = document.createElement("div");
-    actionsDiv.className = "actions";
-    const refreshBtn = document.createElement("button");
-    refreshBtn.className = "refresh-btn";
-    refreshBtn.innerHTML = '<i class="material-icons">refresh</i>';
-    refreshBtn.addEventListener("click", function() {
-      updateFriendStatus(username, li);
+    const $actionsDiv = $("<div>").addClass("actions");
+    const $refreshBtn = $("<button>").addClass("refresh-btn").html('<i class="material-icons">refresh</i>');
+    $refreshBtn.on("click", function() {
+      updateFriendStatus(username, $li);
     });
-    actionsDiv.appendChild(refreshBtn);
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "remove-btn";
-    removeBtn.innerHTML = '<i class="material-icons">delete</i>';
-    removeBtn.addEventListener("click", function() {
-      friendsList.removeChild(li);
+    $actionsDiv.append($refreshBtn);
+    const $removeBtn = $("<button>").addClass("remove-btn").html('<i class="material-icons">delete</i>');
+    $removeBtn.on("click", function() {
+      $li.remove();
       friendUsernames = friendUsernames.filter(name => name !== username);
       saveFriends();
       delete userStatus[username];
@@ -253,9 +223,9 @@ document.addEventListener("DOMContentLoaded", function() {
       }
       sortFriendList();
     });
-    actionsDiv.appendChild(removeBtn);
-    li.appendChild(actionsDiv);
-    friendsList.appendChild(li);
+    $actionsDiv.append($removeBtn);
+    $li.append($actionsDiv);
+    $friendsList.append($li);
     
     if (!fromCache) {
       friendUsernames.push(username);
@@ -263,58 +233,49 @@ document.addEventListener("DOMContentLoaded", function() {
       if(chrome && chrome.storage) {
         chrome.storage.local.set({ userStatus, friendUsernames });
       }
-      updateFriendStatus(username, li);
+      updateFriendStatus(username, $li);
     } else {
       if (userStatus[username]) {
-        solvedSpan.textContent = userStatus[username].solved.length;
-        triedSpan.textContent = userStatus[username].tried.length;
+        $solvedSpan.text(userStatus[username].solved.length);
+        $triedSpan.text(userStatus[username].tried.length);
         let common = userStatus[username].solved.length > 0 && mySolvedSet.size > 0 ? 
                      userStatus[username].solved.filter(prob => mySolvedSet.has(prob)).length : 0;
         let percentage = userStatus[username].solved.length > 0 ? (common / userStatus[username].solved.length * 100).toFixed(3) : "0.000";
         userStatus[username].percentage = percentage;
-        let notSolvedSpan = li.querySelector('.friend-not-solved');
-        if (!notSolvedSpan) {
-          notSolvedSpan = document.createElement("span");
-          notSolvedSpan.className = "friend-not-solved";
-          li.querySelector('.counts').appendChild(notSolvedSpan);
+        let $notSolvedSpan = $li.find('.friend-not-solved');
+        if (!$notSolvedSpan.length) {
+          $notSolvedSpan = $("<span>").addClass("friend-not-solved");
+          $li.find('.counts').append($notSolvedSpan);
         }
-        notSolvedSpan.textContent = percentage + "%";
+        $notSolvedSpan.text(percentage + "%");
       } else {
-        updateFriendStatus(username, li);
+        updateFriendStatus(username, $li);
       }
       sortFriendList();
     }
   }
   
-  addFriendBtn.addEventListener("click", function() {
-    const username = usernameInput.value.trim();
-    if (username) {
-      addFriend(username, false);
-      usernameInput.value = "";
-    }
+  $addFriendBtn.on("click", function() {
+    const uname = $.trim($usernameInput.val());
+    if (uname) { addFriend(uname, false); $usernameInput.val(""); }
   });
-  usernameInput.addEventListener("keyup", function(e) {
-    if (e.key === "Enter") addFriendBtn.click();
+  $usernameInput.on("keyup", function(e) {
+    if (e.key === "Enter") $addFriendBtn.click();
   });
   
-  blastBtn.addEventListener("click", function() {
-    const threshold = parseInt(blastThresholdInput.value, 10);
-    if (isNaN(threshold) || threshold < 1) {
-      alert("Please enter a valid positive integer as threshold.");
-      return;
-    }
+  $blastBtn.on("click", function() {
+    const threshold = parseInt($blastThresholdInput.val(), 10);
+    if (isNaN(threshold) || threshold < 1) { alert("Enter a valid positive integer as threshold."); return; }
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-      if (tabs.length > 0) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: "blast", threshold: threshold }, function(response) {
+      if (tabs.length) {
+        chrome.tabs.sendMessage(tabs[0].id, { type:"blast", threshold }, function(response) {
           console.log("Blast completed. Opened count:", response ? response.opened : 0);
         });
       }
     });
   });
-
-  luckyBtn.addEventListener("click", function() {
-    // Call the separate lucky logic. It uses friendUsernames, userStatus, and mySolvedSet.
-    // Note: Ensure that friendUsernames and userStatus are up-to-date.
+  
+  $luckyBtn.on("click", function() {
     window.performLucky(friendUsernames, userStatus, mySolvedSet);
   });
 });
